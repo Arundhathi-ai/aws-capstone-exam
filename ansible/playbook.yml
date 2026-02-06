@@ -1,0 +1,68 @@
+- name: Configure and Deploy StreamLine App
+  hosts: web
+  become: yes
+  vars:
+    app_version: "v1"
+    repo_url: "https://github.com/<YOUR_GITHUB_USERNAME>/aws-capstone-exam.git"
+    web_root: "/var/www/html"
+ 
+    db_host: "<RDS_ENDPOINT>"
+    db_user: "admin"
+    db_pass: "<DB_PASSWORD>"
+    db_name: "streamline"
+ 
+  tasks:
+    - name: Install packages
+      yum:
+        name:
+          - httpd
+          - php
+          - php-mysqlnd
+          - git
+        state: present
+ 
+    - name: Start Apache
+      service:
+        name: httpd
+        state: started
+        enabled: true
+ 
+    - name: Clean web root
+      file:
+        path: "{{ web_root }}"
+        state: directory
+        recurse: yes
+ 
+    - name: Clone repo
+      git:
+        repo: "{{ repo_url }}"
+        dest: /tmp/app
+        force: yes
+ 
+    - name: Copy app version to web root
+      copy:
+        src: "/tmp/app/app/{{ app_version }}/"
+        dest: "{{ web_root }}/"
+        remote_src: yes
+ 
+    - name: Copy db_check.php
+      copy:
+        src: "/tmp/app/app/db_check.php"
+        dest: "{{ web_root }}/db_check.php"
+        remote_src: yes
+ 
+    - name: Set Apache env vars for DB (Amazon Linux 2)
+      lineinfile:
+        path: /etc/sysconfig/httpd
+        line: 'export {{ item.key }}="{{ item.value }}"'
+        create: yes
+      loop:
+        - { key: "DB_HOST", value: "{{ db_host }}" }
+        - { key: "DB_USER", value: "{{ db_user }}" }
+        - { key: "DB_PASS", value: "{{ db_pass }}" }
+        - { key: "DB_NAME", value: "{{ db_name }}" }
+ 
+    - name: Restart Apache
+      service:
+        name: httpd
+        state: restarted
