@@ -3,7 +3,7 @@
   become: yes
   vars:
     app_version: "v1"
-    repo_url: "https://github.com/<YOUR_GITHUB_USERNAME>/aws-capstone-exam.git"
+    repo_url: "https://github.com/Arundhathi-ai/aws-capstone-exam.git"
     web_root: "/var/www/html"
  
     db_host: "<RDS_ENDPOINT>"
